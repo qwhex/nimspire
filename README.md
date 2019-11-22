@@ -13,7 +13,11 @@ Save and rate your ideas with this ultra-lightweight command line tool.
 
 ### Usage
 
-`./nimpsire`
+- Add a new idea: `./nimpsire`
+- Only review: `./nimspire review`
+
+I recommend adding the nimspire dir to your `PATH`,
+so you can simply enter the command "nimspire".
 
 You can find your ideas at `~/.nimspire/nimspire.db.txt`
 
