@@ -2,10 +2,7 @@ from os import existsOrCreateDir, fileExists, fileNewer, sameFileContent, getHom
 from streams import newFileStream, readLine, writeLine, close
 from terminal import getch, styledWriteLine, fgCyan, fgYellow, fgRed, resetStyle
 from strutils import toLowerAscii
-from sequtils import delete, insert
-import pegs
-
-
+import strformat
 
 let
   logo = """
@@ -19,18 +16,11 @@ let
                            | |
                            |_|
   """
-  nimspireHomeDir = joinPath(getHomeDir(), "nimspire")
+  nimspireHomeDir = joinPath(getHomeDir(), ".nimspire")
   ideasFilename = "nimspire.db.txt"
   dbPath = joinPath(nimspireHomeDir, ideasFilename)
   configPath = joinPath(nimspireHomeDir, "nimspire.ini")
-  defaultKeybaseDir = "/keybase/private/mice"
-
-iterator getTags(text: string): string =
-  if text =~ peg"(@('#' {\w+}))*":
-    for match in matches:
-      if isNil(match):
-        break
-      yield match
+  defaultBackupDir = joinPath(nimspireHomeDir, "backup")
 
 # TODO: styledWriteLine without newline
 proc info(msg: string) =
@@ -49,30 +39,35 @@ if not existsOrCreateDir(nimspireHomeDir):
 
 
 # load config
-var keybaseDir: string
+var backupDir: string
 
 var configRFS = newFileStream(configPath, fmRead)
 if not isNil(configRFS):
   # is it ok this way?
-  keybaseDir = readLine(configRFS)
+  backupDir = readLine(configRFS)
   configRFS.close()
 else:
   var configWFS = newFileStream(configPath, fmWrite)
-  configWFS.writeLine(defaultKeybaseDir)
+  configWFS.writeLine(defaultBackupDir)
   configWFS.close()
-  keybaseDir = defaultKeybaseDir
+  backupDir = defaultBackupDir
   info("Created config file: " & configPath)
+
+
+# check nimspire backup dir
+if not existsOrCreateDir(backupDir):
+  info("Created nimspire backup directory: " & backupDir)
 
 
 # sync backup
 let
-  keybaseDbPath = joinPath(keybaseDir, ideasFilename)
+  backupDbPath = joinPath(backupDir, ideasFilename)
 
-if fileExists(keybaseDbPath) and
-    fileNewer(keybaseDbPath, dbPath) and
-    not sameFileContent(keybaseDbPath, dbPath):
-  copyFileWithPermissions(keybaseDbPath, dbPath)
-  info("Copied ideas from backup: " & keybaseDbPath)
+if fileExists(backupDbPath) and
+    fileNewer(backupDbPath, dbPath) and
+    not sameFileContent(backupDbPath, dbPath):
+  copyFileWithPermissions(backupDbPath, dbPath)
+  info("Copied ideas from backup: " & backupDbPath)
 
 
 # load ideas
@@ -105,7 +100,7 @@ info("Your daily idea dose:")
 echo ideas[0]
 
 proc rate(): int =
-  question("Rate it, please\n> (h)ot, (j)olo, o(k), (l)ol, (o)mg")
+  question("Rate it, please\n> h > j > k > l > o")
   while true:
     case toLowerAscii(getch())
     of 'h': return 1
@@ -123,9 +118,14 @@ let
   fifth = ideas.len div 5
   newIndexForIdea = fifth * rating
 
+info(fmt"Your rating (lower is better): {rating}")
+
 ideas.delete(0)
 if rating != 5:  # delete if omg
   ideas.insert(shownIdea, newIndexForIdea)
+else:
+  info("Idea deleted.")
+
 info("Thanks!")
 
 
@@ -137,4 +137,4 @@ wfs.close()
 
 
 # backup ideas
-copyFileWithPermissions(dbPath, keybaseDbPath)
+copyFileWithPermissions(dbPath, backupDbPath)
