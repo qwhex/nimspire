@@ -11,15 +11,15 @@ let
   configPath = joinPath(nimspireHomeDir, "nimspire.ini")
   defaultBackupDir = joinPath(nimspireHomeDir, "backup")
 
-# TODO: styledWriteLine without newline
+
 proc info(msg: string) =
-  styledWriteLine(stdout, fgYellow, "◉ " & msg, resetStyle)
+  styledWriteLine(stdout, fgYellow, "- " & msg, resetStyle)
 
 proc question(msg: string) =
-  styledWriteLine(stdout, fgCyan, "▲ " & msg, resetStyle)
+  styledWriteLine(stdout, fgCyan, "? " & msg, resetStyle)
 
 proc problem(msg: string) =
-  styledWriteLine(stdout, fgRed, "▼ " & msg, resetStyle)
+  styledWriteLine(stdout, fgRed, "! " & msg, resetStyle)
 
 
 # check nimspire home dir
@@ -70,46 +70,60 @@ if not isNil(fs):
     ideas.add(line)
   fs.close()
 else:
-  ideas.add("write down your ideas daily")
-  ideas.add("execute your ideas with deep care")
-  ideas.add("support the development of nimspire with your love")
+  ideas.add("use h, j, k, l, o to rate this idea")
+  ideas.add("use d if you want to delete an idea")
+  ideas.add("you can set up a backup directory in ~/.nimspire/nimspire.ini")
+  ideas.add("backup directory can be e.g. google drive or keybase")
+  ideas.add("try out nim, it's a fun and fast lang")
 
 proc new_idea() =
   # enter new idea
   question("Enter your idea:")
   var newIdea: string = readLine(stdin)
   ideas.add(newIdea)
-  info("Good one!\n")
+  info("Saved.")
 
 
 if paramCount() == 0 or (paramCount() > 0 and paramStr(1) != "review"):
   new_idea()
 
-# show the next idea in the queue and rate
-info("Your daily idea dose:")
+# show the next idea in the queue (top of file) and rate
+info("Rate this idea:")
 echo ideas[0]
 
 proc rate(): int =
-  question("Rate it, please\n> h > j > k > l > o")
+  question("h / j / k / l / o or (d)elete")
   while true:
     case toLowerAscii(getch())
-    of 'h': return 1
-    of 'j': return 2
+    of 'd': return 0 # delete
+    of 'h': return 5
+    of 'j': return 4
     of 'k': return 3
-    of 'l': return 4
-    of 'o': return 5
-    else: problem("Please select 'h', 'j', 'k', 'l' or 'o'!")
+    of 'l': return 2
+    of 'o': return 1
+    else: problem("Please select:\nh 5☆\nj 4☆\nk 3☆\nl 2☆\no 1☆\nor d for delete")
 
 let
-  shownIdea = ideas[0]
+  shownIdea = ideas[0] # make a copy of the shown idea
   rating = rate()
-  fifth = ideas.len div 5
-  newIndexForIdea = fifth * rating
 
-info(fmt"Your rating (lower is better): {rating}")
-
+# delete shown idea (first line of txt)
 ideas.delete(0)
-if rating != 5:  # delete if omg
+
+if rating != 0:
+  info(fmt"Your rating: {rating}☆")
+  
+  # we insert at at 0.6 at 5 star, at 0.7 at 4 star, etc
+  # at the worst rating, we insert it at the end
+  var newIndexForIdea = 0
+  
+  if rating==1:
+    newIndexForIdea = ideas.len
+  else:
+    newIndexForIdea = (ideas.len div 10) * (11-rating)
+
+  # based on the rating, the idea moves down a certain amount
+  info(fmt"New position: {newIndexForIdea}/{ideas.len}")
   ideas.insert(shownIdea, newIndexForIdea)
 else:
   info("Idea deleted.")
@@ -117,12 +131,12 @@ else:
 info("Thanks!")
 
 
-# save ideas
+# Save ideas
 var wfs = newFileStream(dbPath, fmWrite)
 for i in 0..<ideas.len:
   wfs.writeLine(ideas[i])
 wfs.close()
 
 
-# backup ideas
+# Backup ideas
 copyFileWithPermissions(dbPath, backupDbPath)
