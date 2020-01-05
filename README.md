@@ -1,5 +1,7 @@
 # Nimspire
 
+[![Build Status](https://travis-ci.org/qwhex/nimspire.svg?branch=master)](https://travis-ci.org/qwhex/nimspire)
+
 Save and rate your ideas with this ultra-lightweight idea incubator CLI app.
 
 ![Screenshot](screenshot.png)

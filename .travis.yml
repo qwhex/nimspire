@@ -38,4 +38,4 @@ cache:
   directories:
     - nim-master
     - nim-devel
-dist: trusty
+dist: bionic
