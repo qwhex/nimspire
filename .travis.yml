@@ -1,6 +1,6 @@
 language: c
 env:
-  - nim_branch=master
+  - nim_branch=version-1-0
   - nim_branch=devel
 matrix:
   allow_failures:
@@ -36,6 +36,6 @@ script:
   - nim c -d:release nimspire.nim
 cache:
   directories:
-    - nim-master
+    - nim-version-1-0
     - nim-devel
 dist: bionic
