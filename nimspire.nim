@@ -3,6 +3,7 @@ from os import existsOrCreateDir, fileExists, fileNewer, sameFileContent, getHom
 from streams import newFileStream, readLine, writeLine, close
 from terminal import getch, styledWriteLine, fgCyan, fgYellow, fgRed, resetStyle
 from strutils import toLowerAscii
+from rdstdin import readLineFromStdin
 
 proc info(msg: string) =
   styledWriteLine(stdout, fgYellow, "- " & msg, resetStyle)
@@ -59,7 +60,7 @@ proc saveIdeas(dbPath: string, ideas: seq[string]) =
 proc newIdea(ideas: var seq[string]): seq[string] =
   # enter new idea
   question("Enter your idea:")
-  var idea: string = readLine(stdin)
+  var idea: string = readLineFromStdin("")
   ideas.add(idea)
   info("Idea incubated.")
   return ideas
